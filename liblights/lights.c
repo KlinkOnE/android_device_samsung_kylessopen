@@ -30,9 +30,13 @@
 static pthread_once_t g_init = PTHREAD_ONCE_INIT;
 static pthread_mutex_t g_lock = PTHREAD_MUTEX_INITIALIZER;
 
+static int led_button = 0;
+static int notification_button = 0;
+
 char const *const LCD_FILE = "/sys/class/leds/lcd-backlight/brightness";
 char const *const BUTTON_FILE = "/sys/class/leds/button-backlight/brightness";
-char const *const NOTIFICATION_FILE = "/sys/class/misc/backlightnotification/notification_led";
+//char const *const NOTIFICATION_FILE = "/sys/class/misc/backlightnotification/notification_led";
+char const *const NOTIFICATION_FILE = "/sys/class/leds/button-backlight/brightness";
 
 void init_globals(void)
 {
@@ -90,7 +94,8 @@ static int set_light_backlight(struct light_device_t *dev, struct light_state_t 
 
 static int set_light_buttons (struct light_device_t* dev, struct light_state_t const* state) {
      int err = 0;
-     int on = is_lit (state);
+     led_button = is_lit(state);
+     int on = led_button || notification_button;
      ALOGV("%s state->color = %d is_lit = %d", __func__,state->color , on);
      pthread_mutex_lock (&g_lock);
      if(on)
@@ -105,7 +110,8 @@ static int set_light_buttons (struct light_device_t* dev, struct light_state_t c
 static int set_light_notifications(struct light_device_t* dev, struct light_state_t const* state)
 {
      /* for BLN */
-     int on = is_lit(state);
+     notification_button = is_lit(state);
+     int on = led_button || notification_button;
      pthread_mutex_lock (&g_lock);
 
      if(on)
